@@ -1,2 +1,4 @@
+__pycache__/
 volumes/
 ad_buy/.idea/
+ad_buy/static/
