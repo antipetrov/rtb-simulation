@@ -5,6 +5,18 @@
     <title>Ad Index</title>
 </head>
 <body>
-Index for ads
+<h2>Объявления</h2>
+
+<hr/>
+{% for ad in ads %}
+    <p>#{{ ad.pk }}</p>
+    <p>Текст: {{ ad.content }}</p>
+    <p>
+    Категории: <br/>
+    {% for cat in ad.categories.all %}
+        <li>{{ cat.name }}{% endfor %}</li>
+    </p>
+    <hr/>
+{% endfor %}
 </body>
 </html>
