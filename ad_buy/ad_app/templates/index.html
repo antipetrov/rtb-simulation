@@ -2,7 +2,15 @@
 
 {% block content %}
     <h2>Объявления</h2>
+    <div>
+    {% if current_search %}
+        Поиск: {{ current_search }} <a href="{% url 'index' %}?cat={{ current_category.tag}}">Отменить</a>
+    {% endif %}
+    {% if current_category %}
+        Выбрана категория: <span class="badge badge-secondary">{{ current_category.name }}</span> <a href="{% url 'index' %}?search={{ current_search }}">Отменить</a>
+    {% endif %}
 
+    </div>
     <hr/>
     {% for ad in ads %}
         <div class="card">
@@ -20,5 +28,15 @@
         </div>
         </div>
     {% endfor %}
+
+
+<nav aria-label="Страница" class="mt-4">
+  <ul class="pagination">
+    {% for p in paginator.page_range %}
+      <li class="page-item {% if p == current_page %}disabled{% endif %}"><a class="page-link" href="{% url 'index' %}?cat={{ cat }}&search={{ current_search }}&page={{ p }}">{{ p }}</a></li>
+    {% endfor %}
+  </ul>
+</nav>
+Страница {{ current_page }} из {{ paginator.num_pages }}
 
 {% endblock %}
