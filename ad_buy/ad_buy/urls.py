@@ -19,5 +19,6 @@ from ad_app import views
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('ad/<int:id>/', views.ad_view, name='ad_view'),
     path('admin/', admin.site.urls),
 ]

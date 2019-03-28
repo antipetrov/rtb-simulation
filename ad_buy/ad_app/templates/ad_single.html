@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Объявление #{{ current_ad.pk }}</h2>
+    Текст объявления:
+    <p>{{ current_ad.content }}</p>
+    <p>
+    {% for cat in current_ad.categories.all %}
+        <a href="{% url 'index' %}?cat={{ cat.tag }}" class="badge badge-secondary">{{ cat.name }}</a></li>
+
+    {% endfor %}
+    </p>
+
+{% endblock %}
