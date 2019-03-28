@@ -1,14 +1,23 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    <a href="{% url 'index' %}"> <<< вернуться к списку</a>
+    <hr/>
     <h2>Объявление #{{ current_ad.pk }}</h2>
     Текст объявления:
     <p>{{ current_ad.content }}</p>
-    <p>
+    <p>Категории объявления:
     {% for cat in current_ad.categories.all %}
-        <a href="{% url 'index' %}?cat={{ cat.tag }}" class="badge badge-secondary">{{ cat.name }}</a></li>
-
+        <span class="badge badge-secondary">{{ cat.name }}</span>
     {% endfor %}
     </p>
+    <hr/>
+    <h3>Новое расписание показа</h3>
+    <form action="{% url 'ad_view' current_ad.pk %} " method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Создать" class="btn btn-primary">
+        <input type="submit" value="Предварительный расчет" class="btn btn-secondary">
+    </form>
 
 {% endblock %}

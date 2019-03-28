@@ -130,3 +130,5 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
 
 ADS_LIST_ON_PAGE = 25
+
+DATE_FORMAT = "%d.%m.%Y"
