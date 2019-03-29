@@ -118,3 +118,14 @@ class AdCalendarDate(models.Model):
     timetable = models.ForeignKey(AdTimetable, verbose_name='Расписание', related_name='timetables',  on_delete=models.CASCADE)
     category = models.ForeignKey(Category, verbose_name='Категория', related_name='calendar_dates', on_delete=models.CASCADE)
     cpm = models.IntegerField(verbose_name="CPM (руб. за 1000 показов)", db_index=True)
+
+
+class StatDailyView(models.Model):
+    class Meta:
+        verbose_name = 'Статистика показов'
+        verbose_name_plural = 'Статистики показов'
+
+    daily_views = models.IntegerField(verbose_name='Просмотров в день')
+    
+    def __str__(self):
+        return "Статистика #{}: {}".format(self.pk, self.daily_views)
