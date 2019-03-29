@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'ad_app',
+    'debug_toolbar',
 ]
 
 
@@ -61,6 +62,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'ad_buy.urls'
@@ -132,4 +134,4 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 ADS_LIST_ON_PAGE = 25
 
 DATE_FORMAT = "%d.%m.%Y"
-DATE_FORMAT = "%d.%m.%Y"
+INTERNAL_IPS = ['127.0.0.1']

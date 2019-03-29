@@ -15,7 +15,7 @@ def index(request):
     search = request.GET.get('search')
     page = request.GET.get('page', 1)
 
-    ads = Ad.objects
+    ads = Ad.objects.prefetch_related('categories')
 
     category_selected = None
     if cat:
@@ -26,7 +26,7 @@ def index(request):
     if search:
         ads = ads.filter(content__icontains=search)
 
-    ads = ads.all()
+    ads = ads.order_by('-id').all()
 
     paginator = Paginator(ads, settings.ADS_LIST_ON_PAGE)
 
@@ -44,11 +44,11 @@ def ad_view(request, id):
 
     # check if ad exists
     try:
-        current_ad = Ad.objects.get(pk=id)
+        current_ad = Ad.objects.prefetch_related('categories').get(pk=id)
     except Ad.DoesNotExist:
         return HttpResponse(status=404)
 
-
+    current_timetables = current_ad.timetables.prefetch_related('categories').all()
     cats = [(cat.pk, cat.name) for cat in current_ad.categories.all()]
 
     if request.POST:
@@ -97,6 +97,7 @@ def ad_view(request, id):
 
     return render(request, 'ad_single.html', {
         'current_ad': current_ad,
+        'timetables': current_timetables,
         'form': form,
         'errors': []
     })

@@ -14,7 +14,7 @@
 
 
     <h3>Запланированные показы</h3>
-    {% for timetable in current_ad.timetables.all %}
+    {% for timetable in timetables %}
         <div class="card mb-4">
             <div class="card-header">Расписание #{{ timetable.pk }} от {{ timetable.time_create }}</div>
             <div class="card-body">
