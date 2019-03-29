@@ -22,6 +22,7 @@ from ad_app import views
 urlpatterns = [
     path('', views.index, name='index'),
     path('ad/<int:id>/', views.ad_view, name='ad_view'),
+    path('ad/<int:id>/preview_json', views.ad_timetable_preview_json, name='ad_timetable_preview'),
     path('admin/', admin.site.urls),
 ]
 

@@ -1,7 +1,6 @@
 from django import forms
 from django.core import validators
-from . models import WEEKDAYS
-
+from django.conf import settings
 
 
 class AdTimetableForm(forms.Form):
@@ -24,7 +23,7 @@ class AdTimetableForm(forms.Form):
 
     weekdays = forms.MultipleChoiceField(
         label="Показывать только в эти дни недели",
-        choices=WEEKDAYS,
+        choices=settings.WEEKDAYS,
         widget=forms.CheckboxSelectMultiple()
     )
 

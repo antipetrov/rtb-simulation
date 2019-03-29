@@ -13,14 +13,15 @@
     </p>
 
 
-    <h3>Запланированные показы</h3>
+    <h3 class="mt-5">Запланированные показы</h3>
     {% for timetable in timetables %}
         <div class="card mb-4">
             <div class="card-header">Расписание #{{ timetable.pk }} от {{ timetable.time_create }}</div>
             <div class="card-body">
-                <p>Начало показа: {{ timetable.start_date}}</p>
-                <p>Длительность: {{ timetable.day_count}} день</p>
-                <p>Дни недели: {% for wday in timetable.weekdays_str %}
+                <p>Начало показа: {{ timetable.start_date }}</p>
+                <p>CPM: {{ timetable.cpm }} руб. за 1000 показов</p>
+                <p>Длительность (дни): {{ timetable.day_count}}</p>
+                <p>Показывать только в: {% for wday in timetable.weekdays_str %}
                     <span class="badge badge-success">{{ wday }}</span>
                 {% endfor %}
 
@@ -38,14 +39,13 @@
         </div>
     {% endfor %}
     <hr/>
-    <h3>Новое расписание показа</h3>
-    <form action="{% url 'ad_view' current_ad.pk %} " method="post" id="form_timetable">
+    <h3 class="mt-5">Новое расписание показа</h3>
+    <form action="{% url 'ad_view' current_ad.pk %}" method="post" id="form_timetable">
 {% csrf_token %}
     {% for field in form %}
         <div class="form-group">
             {{ field.label_tag }}
-{#            <input type="email" name="{{ field.html_name }}" class="form-control" id="field_{{ field.html_name }}" aria-describedby="emailHelp" value="{{ field.value }}">#}
-        {{ field }}
+            {{ field }}
             {% if field.help_text %}
                 <small id="{{ field.html_name }}" class="form-text text-muted">{{ field.help_text|safe }}</small>
             {% endif %}
@@ -54,7 +54,6 @@
     {% endfor %}
 
         {% csrf_token %}
-{#        {{ form.as_p }}#}
         {% if form.errors %}
         <div class="alert alert-danger" role="alert">Ошибка! Не удалось сохранить расписание</div>
         <div class="alert alert-danger" role="alert">{{ form.errors }}</div>
@@ -63,8 +62,29 @@
 
         <input type="submit" value="Создать" class="btn btn-primary">
 
-        <input type="submit" value="Предварительный расчет" class="btn btn-secondary">
+        <button class="btn btn-secondary" id="timetable_preview">Предварительный расчет</button>
     </form>
 
+    <script lang="javascript">
+    </script>
 
+
+<div class="modal fade" id="previewModal" tabindex="-1" role="dialog" aria-labelledby="previewModal" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Предварительный расчет</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="previewBody">
+        ...
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

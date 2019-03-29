@@ -1,18 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from django.db import models
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 
-W_MONDAY = ('mon', 'Понедельник')
-W_TUESDAY = ('tue', 'Вторник')
-W_WEDNESDAY = ('wed', 'Среда')
-W_THURSDAY = ('thr', 'Четверг')
-W_FRIDAY = ('fri', 'Пятница')
-W_SATURDAY = ('sat', 'Суббота')
-W_SUNDAY = ('sun', 'Воскресенье')
+from . utils import timetable_to_dates
 
-WEEKDAYS = (W_MONDAY, W_TUESDAY, W_WEDNESDAY, W_THURSDAY, W_FRIDAY, W_SATURDAY, W_SUNDAY)
-WEEKDAYS_DICT = dict(WEEKDAYS)
 
 class Ad(models.Model):
 
@@ -35,9 +28,11 @@ class Category(models.Model):
 
     name = models.CharField(verbose_name="Название", max_length=255)
     tag = models.CharField(verbose_name="Тег", max_length=255)
+    stat_views_daily = models.IntegerField(verbose_name="Просимотров в день", default=0)
 
     def __str__(self):
         return "Категория #{}: {}".format(self.pk, self.name)
+
 
 class AdTimetable(models.Model):
 
@@ -49,7 +44,7 @@ class AdTimetable(models.Model):
     start_date = models.DateField(verbose_name='Начало показа', null=False, db_index=True)
     categories = models.ManyToManyField("Category", related_name="ad_timetables", verbose_name="Категории", )
     weekdays = ArrayField(
-        models.CharField(verbose_name="Дни недели", max_length=3, choices=WEEKDAYS, blank=True, default=WEEKDAYS)
+        models.CharField(verbose_name="Дни недели", max_length=3, choices=settings.WEEKDAYS, blank=True, default=settings.WEEKDAYS)
     )
     day_count = models.IntegerField(verbose_name="Дней показа")
     cpm = models.IntegerField(verbose_name="CPM (руб. за 1000 показов)")
@@ -58,42 +53,39 @@ class AdTimetable(models.Model):
 
     @property
     def weekdays_str(self):
-        return [WEEKDAYS_DICT[w] for w in self.weekdays]
+        return [settings.WEEKDAYS_DICT[w] for w in self.weekdays]
 
     def generate_calendar(self, dry_run=False):
+        """
+        Создаем записи AdCalendarDate для этого расписания - по одной записи для каждой даты и категории
+        :param dry_run:
+        :return:
+        """
 
-        day_count = self.day_count
         calendar_entries = []
-        new_date = self.start_date
 
         # what categories affected
         target_categories = self.categories.all()
         if not target_categories:
             target_categories = self.ad.categories.all()
 
-        while day_count > 0:
+        actual_dates = timetable_to_dates(self.start_date, self.day_count, self.weekdays)
 
-            # if weekday allowed
-            weekday_code = WEEKDAYS[new_date.weekday()][0]
-            if weekday_code in self.weekdays:
+        for new_date in actual_dates:
+            for current_category in target_categories:
+                new_calendar_entry = AdCalendarDate(
+                    date=new_date,
+                    ad=self.ad,
+                    timetable=self,
+                    category=current_category,
+                    cpm=self.cpm
+                )
+                if not dry_run:
+                    new_calendar_entry.save()
+                calendar_entries.append(new_calendar_entry)
 
-                for current_category in target_categories:
-                    new_calendar_entry = AdCalendarDate(
-                        date=new_date,
-                        ad=self.ad,
-                        timetable=self,
-                        category=current_category,
-                        cpm=self.cpm
-                    )
-                    if not dry_run:
-                        new_calendar_entry.save()
-                    calendar_entries.append(new_calendar_entry)
-
-            day_count -= 1
-            new_date += timedelta(days=1)
 
         return calendar_entries
-
 
     def save(self, *args, **kwargs):
         super(AdTimetable, self).save(*args, **kwargs)
@@ -119,13 +111,61 @@ class AdCalendarDate(models.Model):
     category = models.ForeignKey(Category, verbose_name='Категория', related_name='calendar_dates', on_delete=models.CASCADE)
     cpm = models.IntegerField(verbose_name="CPM (руб. за 1000 показов)", db_index=True)
 
+    @classmethod
+    def daily_winners(cls, date_list: list) -> dict:
+        """
+        Выбирает из календаря дни по указанному списку и показывает самое дорогое объявление в каждой категории
 
-class StatDailyView(models.Model):
-    class Meta:
-        verbose_name = 'Статистика показов'
-        verbose_name_plural = 'Статистики показов'
+        :param date_list:
+        :return: dict
+        """
+        items = cls.objects.filter(date__in=date_list).all()
 
-    daily_views = models.IntegerField(verbose_name='Просмотров в день')
-    
-    def __str__(self):
-        return "Статистика #{}: {}".format(self.pk, self.daily_views)
+        result = {}
+        for item in items:
+
+            if item.date not in result:
+                result[item.date] = {}
+
+            if item.category_id not in result[item.date]:
+                result[item.date][item.category_id] = {
+                    'ads': [],
+                    'best_ad':{},
+                }
+
+            result[item.date][item.category_id]['ads'].append(item)
+            if result[item.date][item.category_id]['best_ad'].get('cpm',0) < item.cpm:
+                result[item.date][item.category_id]['best_ad'] = {'cpm':item.cpm, 'ad_id': item.id}
+
+        return result
+
+
+# class StatDailyView(models.Model):
+#     class Meta:
+#         verbose_name = 'Статистика показов'
+#         verbose_name_plural = 'Статистики показов'
+#
+#     daily_views = models.IntegerField(verbose_name='Просмотров в день')
+#
+#
+#     @classmethod
+#     def get_daily_views_per_category(cls, date:date)->int:
+#         """
+#         Отдает количество просмотров по категории за выбранный день
+#         !!!заглушка - параметр data не используется, предполагается
+#         что дневние просмотры равномерно распределяются по всем известным категориям
+#
+#         :param date:
+#         :return:
+#         """
+#
+#         cat_count = Category.objects.count()
+#
+#         stat = StatDailyView.objects.order_by('-pk').first()
+#         daily_views = stat.daily_views
+#         daily_views_per_cat = daily_views / cat_count
+#
+#         return daily_views_per_cat
+#
+#     def __str__(self):
+#         return "Статистика #{}: {}".format(self.pk, self.daily_views)

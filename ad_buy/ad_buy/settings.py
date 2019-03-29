@@ -135,3 +135,14 @@ ADS_LIST_ON_PAGE = 25
 
 DATE_FORMAT = "%d.%m.%Y"
 INTERNAL_IPS = ['127.0.0.1']
+
+W_MONDAY = ('mon', 'Понедельник')
+W_TUESDAY = ('tue', 'Вторник')
+W_WEDNESDAY = ('wed', 'Среда')
+W_THURSDAY = ('thr', 'Четверг')
+W_FRIDAY = ('fri', 'Пятница')
+W_SATURDAY = ('sat', 'Суббота')
+W_SUNDAY = ('sun', 'Воскресенье')
+
+WEEKDAYS = (W_MONDAY, W_TUESDAY, W_WEDNESDAY, W_THURSDAY, W_FRIDAY, W_SATURDAY, W_SUNDAY)
+WEEKDAYS_DICT = dict(WEEKDAYS)
