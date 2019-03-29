@@ -1,20 +1,34 @@
 from django import forms
-from datetime import date
+from django.core import validators
+from . models import WEEKDAYS
 
-W_MONDAY = ('mon', 'Понедельник')
-W_TUESDAY = ('tue', 'Вторник')
-W_WEDNESDAY = ('wed', 'Среда')
-W_THURSDAY = ('thr', 'Четверг')
-W_FRIDAY = ('fri', 'Пятница')
-W_SATURDAY = ('sat', 'Суббота')
-W_SUNDAY = ('sun', 'Воскресенье')
-
-WEEKDAYS = (W_MONDAY, W_TUESDAY, W_WEDNESDAY, W_THURSDAY, W_FRIDAY, W_SATURDAY, W_SUNDAY)
 
 
 class AdTimetableForm(forms.Form):
-    start_date = forms.DateField(label='Дата Начала', widget=forms.DateInput, )
-    category_ids = forms.MultipleChoiceField(label="В категориях", choices=[], widget=forms.CheckboxSelectMultiple)
-    weekdays = forms.MultipleChoiceField(label="Дни недели", choices=WEEKDAYS, widget=forms.CheckboxSelectMultiple)
-    day_count = forms.IntegerField(label="Дней показа")
-    cpm = forms.IntegerField(label="CPM (руб. за 1000 показов)")
+    start_date = forms.DateField(
+        label='Начало показа',
+        widget=forms.DateInput(attrs={'class': 'form-control'}),
+    )
+
+    day_count = forms.IntegerField(
+        label="Длительность показа",
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        validators=[validators.MinValueValidator(1)]
+    )
+
+    category_ids = forms.MultipleChoiceField(
+        label="Показывать только в этих категориях",
+        choices=[],
+        widget=forms.CheckboxSelectMultiple(),
+     )
+
+    weekdays = forms.MultipleChoiceField(
+        label="Показывать только в эти дни недели",
+        choices=WEEKDAYS,
+        widget=forms.CheckboxSelectMultiple()
+    )
+
+    cpm = forms.IntegerField(
+        label="CPM (руб. за 1000 показов)",
+        widget = forms.TextInput(attrs={'class': 'form-control'})
+    )

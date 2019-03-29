@@ -110,7 +110,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru-ru'
 
 TIME_ZONE = 'UTC'
 
@@ -131,4 +131,5 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
 ADS_LIST_ON_PAGE = 25
 
+DATE_FORMAT = "%d.%m.%Y"
 DATE_FORMAT = "%d.%m.%Y"

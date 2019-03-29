@@ -1,11 +1,11 @@
 from datetime import date
 
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import render, resolve_url
+from django.http import HttpResponse, HttpResponseRedirect
 from django.core.paginator import Paginator
 from django.conf import settings
 
-from . models import Ad, Category
+from . models import Ad, Category, AdTimetable, WEEKDAYS
 from . forms import AdTimetableForm
 
 
@@ -41,22 +41,62 @@ def index(request):
 
 
 def ad_view(request, id):
+
+    # check if ad exists
     try:
         current_ad = Ad.objects.get(pk=id)
     except Ad.DoesNotExist:
         return HttpResponse(status=404)
 
+
     cats = [(cat.pk, cat.name) for cat in current_ad.categories.all()]
-    selected_cat_ids = [c[0] for c in cats]
 
-    initial_data = {
-        'category_ids': selected_cat_ids,
-        'start_date': date.today().strftime(settings.DATE_FORMAT)
-    }
+    if request.POST:
+        form = AdTimetableForm(data=request.POST)
+        form.fields['category_ids'].choices = cats
 
-    form = AdTimetableForm(initial=initial_data)
-    form.fields['category_ids'].choices = cats
+        if not form.is_valid():
 
-    return render(request, 'ad_single.html', {'current_ad': current_ad, 'form': form})
+            form.fields['category_ids'].choices = cats
+            return render(request, 'ad_single.html', {'current_ad': current_ad,
+                                                      'form': form,
+                                                      'errors': form.errors})
+        else:
+            new_timetable = AdTimetable(
+                ad=current_ad,
+                start_date=form.cleaned_data['start_date'],
+                weekdays=form.cleaned_data['weekdays'],
+                day_count=form.cleaned_data['day_count'],
+                cpm=form.cleaned_data['cpm'],
+
+            )
+
+            new_timetable.save()
+
+            new_timetable.categories.set(form.cleaned_data['category_ids'])
+
+            return render(request, 'ad_single.html', {'current_ad': current_ad,
+                                                      'form': form,
+                                                      'errors': form.errors,
+                                                      'message': 'Расписание сохранено!'})
 
 
+    else:
+        selected_cat_ids = [c[0] for c in cats]
+
+        initial_data = {
+            'category_ids': selected_cat_ids,
+            'start_date': date.today().strftime(settings.DATE_FORMAT),
+            'day_count':1,
+            'cpm': 10,
+            'weekdays': [w[0] for w in WEEKDAYS]
+        }
+
+        form = AdTimetableForm(initial=initial_data)
+        form.fields['category_ids'].choices = cats
+
+    return render(request, 'ad_single.html', {
+        'current_ad': current_ad,
+        'form': form,
+        'errors': []
+    })
