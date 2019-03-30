@@ -39,3 +39,6 @@ LOGGING = {
         },
     },
 }
+
+
+ALLOWED_HOSTS = []
