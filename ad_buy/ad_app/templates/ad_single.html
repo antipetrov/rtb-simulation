@@ -12,6 +12,7 @@
     {% endfor %}
     </p>
 
+    <a class="btn btn-lg btn-primary mt-5 mb-5" href="{% url 'ad_report' current_ad.pk %}">Общий охват</a>
 
     <h3 class="mt-5">Запланированные показы</h3>
     {% for timetable in timetables %}
@@ -35,11 +36,14 @@
                  {% endfor %}
                 {% endif %}
                 </p>
+
+            <a class="btn btn-danger mt-5" href="{% url 'ad_timetable_delete' current_ad.pk timetable.pk %}">Удалить</a>
+
         </div>
         </div>
     {% endfor %}
     <hr/>
-    <h3 class="mt-5">Новое расписание показа</h3>
+    <h3 class="mt-5">Добавить расписание показа</h3>
     <form action="{% url 'ad_view' current_ad.pk %}" method="post" id="form_timetable">
 {% csrf_token %}
     {% for field in form %}
@@ -78,8 +82,10 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <div class="modal-body" id="previewBody">
-        ...
+      <div class="modal-body">
+      Если сохранить новое расписание, прогноз следующий.
+      <div id="previewBody">...</div>
+
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>

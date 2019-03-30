@@ -74,7 +74,7 @@ $( document ).ready(function() {
                 console.log('POST success ', resp);
                 $("#previewBody").html("");
 
-                $("<p>Охват: " + resp.views_total + "</p>").appendTo($("#previewBody"));
+                $("<p>Охват расписания: " + resp.views_total + "просмотров </p>").appendTo($("#previewBody"));
 
                 for (var w in resp.warnings) {
                     var warn = resp.warnings[w];

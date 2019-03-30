@@ -8,7 +8,7 @@ from django.conf import settings
 
 from . models import Ad, Category, AdTimetable, AdCalendarDate
 from . forms import AdTimetableForm
-from . utils import timetable_to_dates, calculate_daily_views
+from . utils import timetable_to_dates
 
 
 def index(request):
@@ -78,10 +78,10 @@ def ad_view(request, id):
             new_timetable.categories.set(form.cleaned_data['category_ids'])
 
             return render(request, 'ad_single.html', {'current_ad': current_ad,
+                                                      'timetables': current_timetables,
                                                       'form': form,
                                                       'errors': form.errors,
                                                       'message': 'Расписание сохранено!'})
-
 
     else:
         selected_cat_ids = [c[0] for c in cats]
@@ -105,6 +105,36 @@ def ad_view(request, id):
     })
 
 
+def ad_report(request, id):
+    try:
+        current_ad = Ad.objects.prefetch_related('categories').get(pk=id)
+    except Ad.DoesNotExist:
+        return HttpResponse(status=404)
+
+    dates = current_ad.get_dates_by_ad()
+
+    total_views, warnings = current_ad.get_views_forecast(dates)
+
+    return render(request, 'ad_report.html', {'current_ad': current_ad, 'total_views':total_views, 'warnings':warnings})
+
+
+def ad_timetable_delete(request, id, timetable_id):
+
+    try:
+        current_ad = Ad.objects.prefetch_related('categories').get(pk=id)
+    except Ad.DoesNotExist:
+        return HttpResponse(status=404)
+
+
+    try:
+        current_timetable = AdTimetable.objects.filter(pk=timetable_id).delete()
+    except Ad.DoesNotExist:
+        return HttpResponse(status=404)
+
+    return HttpResponseRedirect('/ad/{}/'.format(current_ad.pk))
+
+
+
 def ad_timetable_preview_json(request, id):
 
     try:
@@ -121,16 +151,13 @@ def ad_timetable_preview_json(request, id):
     categories_all = current_ad.categories.all()
     cats = [(cat.pk, cat.name) for cat in categories_all]
 
+    # create form to validate incoming data
     form = AdTimetableForm(data=timetable_data)
     form.fields['category_ids'].choices = cats
 
     if not form.is_valid():
         return JsonResponse({'status': 'error', 'error': 'data invalid'}, status=400)
 
-    # from here timetable_data considered valid
-
-    cat_views = {cat.pk:cat.stat_views_daily for cat in categories_all}
-    cats_dict = dict(cats)
 
     date_list = timetable_to_dates(
         form.cleaned_data['start_date'],
@@ -143,6 +170,11 @@ def ad_timetable_preview_json(request, id):
 
     # проходим по выбранным датам и считаем посещения
     # если другое объявление выигрывает - посещений нет
+
+    # забираем статистику посещений по категориям
+    cat_views = {cat.pk:cat.stat_views_daily for cat in categories_all}
+    cats_dict = dict(cats)
+
     warnings = []
     views_dict = {}
     views_total = 0

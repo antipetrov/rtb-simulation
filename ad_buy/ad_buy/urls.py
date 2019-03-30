@@ -23,6 +23,8 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('ad/<int:id>/', views.ad_view, name='ad_view'),
     path('ad/<int:id>/preview_json', views.ad_timetable_preview_json, name='ad_timetable_preview'),
+    path('ad/<int:id>/report', views.ad_report, name='ad_report'),
+    path('ad/<int:id>/timetable/<int:timetable_id>/delete', views.ad_timetable_delete, name='ad_timetable_delete'),
     path('admin/', admin.site.urls),
 ]
 

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <a href="{% url 'ad_view' current_ad.pk %}"> <<< вернуться к объявлению</a>
+    <hr/>
+    <h2>Объявление #{{ current_ad.pk }}</h2>
+    Текст объявления:
+    <p>{{ current_ad.content }}</p>
+    <p>Категории объявления:
+    {% for cat in current_ad.categories.all %}
+        <span class="badge badge-secondary">{{ cat.name }}</span>
+    {% endfor %}
+    </p>
+
+    <h3 class="mt-5">Прогноз охвата</h3>
+
+    <p>Охват: {{ total_views }} просмотров</p>
+
+    <p>Рекомендации:</p>
+    {% for warn in warnings %}
+    <div class="alert alert-danger" role="alert">
+      <strong>{{ warn.date }}</strong> в категории <strong>{{ warn.category }}</strong> рекомендуется поднять цену до {{ warn.recommended_cpm }}.
+    </div>
+    {% endfor %}
+
+{% endblock %}
