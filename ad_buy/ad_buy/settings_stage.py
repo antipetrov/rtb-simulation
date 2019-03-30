@@ -41,4 +41,4 @@ LOGGING = {
 }
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['adtest.artrediska.com']
