@@ -1,0 +1,53 @@
+version: '2'
+
+services:
+  postgres:
+    restart: always
+    image: postgres:latest
+    ports:
+    - "5438:5432"
+    networks:
+    - adbuy_network
+    volumes:
+    - ./volumes/postgres/data:/var/lib/postgresql/data:Z
+    - ./volumes/postgres/conf/postgresql.conf:/etc/postgresql/postgresql.conf:Z
+    environment:
+    - POSTGRES_PASSWORD=build_password
+    - PGPASSWORD=build_password
+
+  backend:  
+    restart: always
+    build:  
+      context: .
+      dockerfile: Dockerfile
+    command: bash -c "cd ad_buy && python manage.py migrate --noinput && python manage.py collectstatic --noinput && uwsgi --ini /opt/backend/config/uwsgi/uwsgi.ini"
+    volumes:
+    - ./volumes/backend/static:/opt/static:rw
+    depends_on:
+    - "postgres"
+    links:
+    - "postgres"
+    ports: 
+    - "8000:8000"
+    networks:
+    - adbuy_network
+    environment:
+    - DJANGO_SETTINGS_MODULE=ad_buy.settings_stage
+  
+  nginx:
+    image: nginx:latest
+    volumes:
+    - ./volumes/backend/static:/opt/static:ro
+    - ./config/nginx/conf.d:/etc/nginx/conf.d
+    - ./volumes/nginx/log:/var/log/nginx
+    ports:
+    - "80:80"
+    - "443:443"
+    links:
+    - "backend"
+    networks:
+    - adbuy_network
+
+networks:
+  adbuy_network:
+    driver: bridge

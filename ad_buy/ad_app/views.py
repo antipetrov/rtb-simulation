@@ -138,9 +138,8 @@ def ad_timetable_preview_json(request, id):
         form.cleaned_data['weekdays']
     )
 
-    daily_bids_data = AdCalendarDate.daily_winners(date_list)
-
-    view_stat = calculate_daily_views(current_ad, )
+    # получили данные из уже сохраенных календарей
+    daily_bids_data = AdCalendarDate.get_daily_wins(date_list)
 
     # проходим по выбранным датам и считаем посещения
     # если другое объявление выигрывает - посещений нет
@@ -148,7 +147,7 @@ def ad_timetable_preview_json(request, id):
     views_dict = {}
     views_total = 0
     for new_date in date_list:
-        daily_data = daily_data.get(new_date, {})
+        daily_data = daily_bids_data.get(new_date, {})
         date_key = new_date.isoformat()
 
         views_dict[date_key] = 0

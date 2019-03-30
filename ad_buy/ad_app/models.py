@@ -112,7 +112,7 @@ class AdCalendarDate(models.Model):
     cpm = models.IntegerField(verbose_name="CPM (руб. за 1000 показов)", db_index=True)
 
     @classmethod
-    def daily_winners(cls, date_list: list) -> dict:
+    def get_daily_wins(cls, date_list: list) -> dict:
         """
         Выбирает из календаря дни по указанному списку и показывает самое дорогое объявление в каждой категории
 
