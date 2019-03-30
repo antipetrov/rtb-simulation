@@ -23,7 +23,7 @@ services:
     command: bash -c "cd ad_buy && python manage.py migrate --noinput && python manage.py collectstatic --noinput && uwsgi --ini /opt/backend/config/uwsgi/uwsgi.ini"
     volumes:
     - ./volumes/backend/static:/opt/static:rw
-    - ./volumes/backend/log:/opt/backend/log:rw
+    - ./volumes/backend/log:/opt/backend/ad_buy/log:rw
     depends_on:
     - "postgres"
     links:
