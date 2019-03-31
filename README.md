@@ -47,7 +47,15 @@
 
 Все зависимости собираются в докер контейнере.
 
-Для старта: `docker-compose -f docker-compose.stage.yaml up -d`
+Для старта: `docker-compose -f docker-compose.stage.yaml up -d --build`
+
+Будут запущены postgresql, backend Объявлятора (uwsgi внутри контейнера) и nginx
+
+Конфиг nginx - в исходниках, в `config/nginx/conf.d/adtest.artrediska.com.conf`
+
+Конфиг uwsgi - `config/uwsgi/uwsgi.ini`
+
+Для тестового сервера используется django-конфиг `ad_buy/ad_buy/settings_stage.py`
 
 
 
