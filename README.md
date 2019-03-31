@@ -36,6 +36,8 @@
 - PostgreSQL 11.2
 - Docker, docker-compose
 
+Если запустить `docker-compose up -d` - поднимется PostgreSQL и под нее как раз все сконфигурировано в `settings.py`
+
 ### Запуск
 
 - Установка зависимостей: `pip install -r requirements.txt`
