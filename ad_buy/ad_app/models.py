@@ -16,25 +16,28 @@ class Ad(models.Model):
     content = models.TextField()
     categories = models.ManyToManyField("Category", related_name="ads", verbose_name="Категории", )
 
-    def get_dates_by_ad(self) -> list:
+    def get_dates(self) -> list:
         """
         Возвращает даты показа объявления
         :return:
         """
 
-        dates_set = set()
-        dates_qwr = AdCalendarDate.objects.filter(ad_id=self.pk).order_by('date').all()
-        for date_rec in dates_qwr:
-            dates_set.add(date_rec.date)
+        from django.db.models import Max
 
-        return list(dates_set)
+        dates = []
+        calendar_dates = list(AdCalendarDate.objects.values('date').filter(ad_id=self.pk).annotate(cpm_max=Max('cpm')))
+        for date_rec in calendar_dates:
+            dates.append(date_rec['date'])
+
+        return dates
 
     def get_views_forecast(self, date_list) -> dict:
         """
         Выбирает из календаря дни показа объявления и за каждый день в каждой категории проводит торги
         Если Ообъявление за этот день - выиграло - прибавляем дневные прсмотры этой категории к общей сумме
+        Дневные просмотры берутся из статистики (Category.stat_views_daily)
 
-        :param ad_object: Ad
+        :param date_list: list
         :return: dict
         """
         this_categories_qwr = self.categories.all()
@@ -42,41 +45,23 @@ class Ad(models.Model):
         cats_names = dict(cats)
         cat_views = {cat.pk: cat.stat_views_daily for cat in this_categories_qwr}
 
-        calendar_dates_qwr = AdCalendarDate.objects.filter(date__in=date_list).all()
+        # находим победителей торгов за каждый день показа категориях этого объявления
+        best_ads = AdCalendarDate.get_daily_wins(date_list, [cat.pk for cat in this_categories_qwr])
 
-        # находим победителей торгов за каждый день показа в каждой категории
-        best_ads = {}
-        for item in calendar_dates_qwr:
-
-            if item.date not in best_ads:
-                best_ads[item.date] = {}
-
-            if item.category_id not in best_ads[item.date]:
-                best_ads[item.date][item.category_id] = {
-                    'best_ad': {},
-                }
-
-            if best_ads[item.date][item.category_id]['best_ad'].get('cpm', 0) < item.cpm:
-                best_ads[item.date][item.category_id]['best_ad'] = {'cpm': item.cpm, 'ad_id': item.ad_id}
-
-
-        # находим просмотры за каждый день в каждой категории
+        # считаем просмотры за каждый день в каждой категории
         total_views = 0
         warnings = []
-        for date, date_data in best_ads.items():
-            for cat_id, ad_data in date_data.items():
-                if ad_data['best_ad']['ad_id'] == self.pk:
+        for date, categories in best_ads.items():
+            for cat_id, best_ad_data in categories.items():
+                if best_ad_data['ad_id'] == self.pk:
                     total_views += cat_views[cat_id]
                 else:
                     # победил не наш - рекомендация поднять цену
-
-                    #todo: корректно учитывать вторую цену в случае наложения расписаний того же объявления
                     warnings.append({'date': date,
                                      'category': cats_names[cat_id],
-                                     'recommended_cpm': ad_data['best_ad']['cpm']+1})
+                                     'recommended_cpm': best_ad_data['cpm']+1})
 
         return total_views, warnings
-
 
     def __str__(self):
         return "Объявление #{}: {}".format(self.pk, self.content[:32])
@@ -186,61 +171,32 @@ class AdCalendarDate(models.Model):
 
 
     @classmethod
-    def get_daily_wins(cls, date_list: list) -> dict:
+    def get_daily_wins(cls, date_list: list, cat_id_list: list = None) -> dict:
         """
-        Выбирает из календаря дни по указанному списку и показывает самое дорогое объявление в каждой категории
+        Выбирает из календаря дни по списку date_list и показывает самое дорогое объявление в каждой категории
+
+        Возвращает словарь вида
+        result[date][category_id] <- {'cpm':<int>, 'ad_id':<int>}
 
         :param date_list:
         :return: dict
         """
-        items = cls.objects.filter(date__in=date_list).all()
+        items = cls.objects.filter(date__in=date_list)
+
+        if cat_id_list:
+            items = items.filter(category__in=cat_id_list)
 
         result = {}
-        for item in items:
+        for item in items.all():
 
             if item.date not in result:
                 result[item.date] = {}
 
             if item.category_id not in result[item.date]:
-                result[item.date][item.category_id] = {
-                    'ads': [],
-                    'best_ad': {},
-                }
+                result[item.date][item.category_id] = {}
 
-            result[item.date][item.category_id]['ads'].append(item)
-            if result[item.date][item.category_id]['best_ad'].get('cpm', 0) < item.cpm:
-                result[item.date][item.category_id]['best_ad'] = {'cpm': item.cpm, 'ad_id': item.id}
+            if result[item.date][item.category_id].get('cpm', 0) < item.cpm:
+                result[item.date][item.category_id] = {'cpm': item.cpm, 'ad_id': item.ad.id}
 
         return result
 
-
-
-def get_views_by_ad(ad: Ad) -> dict:
-    """
-    Выбирает из календаря дни показа объявления ad и за каждый день в каждой категории проводит торги
-    Если Ообъявление за этот день - выиграло - прибавляем дневные прсмотры этой категории к общей сумме
-
-    :param ad_object: Ad
-    :return: dict
-    """
-
-    cat_qwr = ad.categories.all()
-
-    items = cls.objects.filter(date__in=date_list).all()
-
-    result = {}
-    for item in items:
-
-        if item.date not in result:
-            result[item.date] = {}
-
-        if item.category_id not in result[item.date]:
-            result[item.date][item.category_id] = {
-                'ads': [],
-                'best_ad': {},
-            }
-
-        if result[item.date][item.category_id]['best_ad'].get('cpm', 0) < item.cpm:
-            result[item.date][item.category_id]['best_ad'] = {'cpm': item.cpm, 'ad_id': item.id}
-
-    return result

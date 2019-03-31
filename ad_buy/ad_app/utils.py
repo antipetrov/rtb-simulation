@@ -24,9 +24,9 @@ def timetable_to_dates(start_date: date, day_count: int, weekdays_allowed: list)
         if weekdays_allowed and current_weekday_code in weekdays_allowed:
 
             result.append(new_date)
-
             day_count -= 1
-            new_date += timedelta(days=1)
+
+        new_date += timedelta(days=1)
 
     return result
 

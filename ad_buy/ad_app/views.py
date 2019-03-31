@@ -111,7 +111,7 @@ def ad_report(request, id):
     except Ad.DoesNotExist:
         return HttpResponse(status=404)
 
-    dates = current_ad.get_dates_by_ad()
+    dates = current_ad.get_dates()
 
     total_views, warnings = current_ad.get_views_forecast(dates)
 
@@ -147,7 +147,7 @@ def ad_timetable_preview_json(request, id):
     except json.JSONDecodeError:
         return JsonResponse({'status': 'error', 'error': 'json decode error'}, status=400)
 
-    # load cats (to validate form)
+    # load cats
     categories_all = current_ad.categories.all()
     cats = [(cat.pk, cat.name) for cat in categories_all]
 
@@ -158,7 +158,6 @@ def ad_timetable_preview_json(request, id):
     if not form.is_valid():
         return JsonResponse({'status': 'error', 'error': 'data invalid'}, status=400)
 
-
     date_list = timetable_to_dates(
         form.cleaned_data['start_date'],
         form.cleaned_data['day_count'],
@@ -168,8 +167,9 @@ def ad_timetable_preview_json(request, id):
     # получили данные из уже сохраенных календарей
     daily_bids_data = AdCalendarDate.get_daily_wins(date_list)
 
-    # проходим по выбранным датам и считаем посещения
+    # проходим по выбранным датам и считаем посещения нашего объявления
     # если другое объявление выигрывает - посещений нет
+    # и нужно выдать предупреждение про эту дату
 
     # забираем статистику посещений по категориям
     cat_views = {cat.pk:cat.stat_views_daily for cat in categories_all}
